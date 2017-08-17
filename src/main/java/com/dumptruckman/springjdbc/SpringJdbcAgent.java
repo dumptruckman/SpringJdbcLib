@@ -27,7 +27,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import javax.sql.DataSource;
-import java.io.File;
 
 /**
  * This class can be used to initiate a connection to a database and provide {@link JdbcTemplate} objects.
@@ -37,39 +36,38 @@ public class SpringJdbcAgent {
     /**
      * Initializes a SpringJdbcAgent, starting a connection to a database based on the given settings.
      *
-     * @param connInfo the details of the db connection
-     * @param databaseFolder A folder which will contain any embedded database.  This may or may not be used depending
-     *                       on the given settings.
+     * @param connInfo The details of the db connection
      * @param classLoader This is the ClassLoader that will be used to load the database Driver class.
      * @return a new SpringJdbcAgent.
      * @throws ClassNotFoundException if the driver specified in settings is not found.
      */
-    public static SpringJdbcAgent createAgent(ConnectionInfo connInfo, File databaseFolder, ClassLoader classLoader)
+    public static SpringJdbcAgent createAgent(ConnectionInfo connInfo, ClassLoader classLoader)
             throws ClassNotFoundException {
-        String dbType = connInfo.getDbType();
+        String driverClassName = getDriverClassName(connInfo.getDbType());
         String url = connInfo.getUrl();
-        if (dbType.equalsIgnoreCase("H2")) {
-            dbType = "org.h2.Driver";
-            if (!url.startsWith("jdbc")) {
-                url = "jdbc:h2:" + new File(databaseFolder, url).getPath();
-            }
-        } else if (dbType.equalsIgnoreCase("MySQL")) {
-            dbType = "com.mysql.jdbc.Driver";
-        } else if (dbType.equalsIgnoreCase("SQLite")) {
-            dbType = "org.sqlite.JDBC";
-            if (!url.startsWith("jdbc")) {
-                url = "jdbc:sqlite:" + new File(databaseFolder, url).getPath();
-            }
-        }
         ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(classLoader);
+
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName(dbType);
+        dataSource.setDriverClassName(driverClassName);
         dataSource.setUrl(url);
         dataSource.setUsername(connInfo.getUser());
         dataSource.setPassword(connInfo.getPass());
         Thread.currentThread().setContextClassLoader(previousClassLoader);
+
         return new SpringJdbcAgent(connInfo, dataSource);
+    }
+
+    private static String getDriverClassName(final String dbType) {
+        switch (dbType.toLowerCase()) {
+            case "mysql":
+                return "com.mysql.jdbc.Driver";
+            case "sqlite":
+                return "org.sqlite.JDBC";
+            case "h2":
+            default:
+                return "org.h2.Driver";
+        }
     }
 
     private final ConnectionInfo connInfo;
