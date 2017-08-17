@@ -1,0 +1,105 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+    id "com.github.johnrengelman.shadow" version "2.0.1"
+    id 'net.minecrell.licenser' version '0.3'
+}
+
+apply plugin: 'java'
+apply plugin: 'net.minecrell.licenser'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'maven'
+
+project.ext {
+    bukkit_version = '1.12.1-R0.1-SNAPSHOT'
+    plugin_version = '1.0'
+}
+
+group 'com.dumptruckman.bukkit'
+version "$project.plugin_version"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+    maven {
+        url "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+    }
+    maven {
+        url "http://repo.bstats.org/content/repositories/releases/"
+    }
+}
+
+dependencies {
+    compile 'org.springframework:spring-jdbc:4.3.9.RELEASE'
+    compile 'com.h2database:h2:1.4.191'
+    compile "org.bstats:bstats-bukkit:1.1"
+
+    compileOnly "org.bukkit:bukkit:$project.bukkit_version"
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+license {
+    header project.file('license/HEADER.txt')
+    include '**/*.java'
+    newLine false
+}
+
+processResources {
+    filter ReplaceTokens, tokens: [
+            "plugin_version": project.plugin_version.toString()
+    ]
+}
+
+jar.finalizedBy shadowJar
+
+shadowJar {
+    baseName = project.name
+    classifier = null
+    relocate 'org.bstats', 'bstats.springjdbclib'
+    relocate 'org.springframework', 'springframework.springjdbclib'
+    relocate 'org.apache.commons', 'commons.springjdbclib'
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+    from "${projectDir}/LICENSE.txt"
+}
+
+task javadocJar(type: Jar) {
+    classifier 'javadoc'
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+def installer = install.repositories.mavenInstaller
+if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
+    shadowJar.dependsOn checkLicenses
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                repository(url: "http://repo.onarandombox.com/content/repositories/thirdparty/") {
+                    authentication(userName: mavenUser, password: mavenPassword)
+                }
+                snapshotRepository(url: "http://repo.onarandombox.com/content/repositories/thirdparty-dev/") {
+                    authentication(userName: mavenUser, password: mavenPassword)
+                }
+            }
+        }
+    }
+
+    def deployer = uploadArchives.repositories.mavenDeployer
+    [installer, deployer]*.pom*.whenConfigured {pom ->
+        pom.dependencies.removeAll { it.groupId == 'org.bstats' || it.groupId == 'com.okkero.skedule' || it.groupId == 'org.jetbrains.kotlin'  || it.groupId == 'org.jetbrains.kotlinx' }
+    }
+} else {
+    [installer]*.pom*.whenConfigured {pom ->
+        pom.dependencies.removeAll { it.groupId == 'org.bstats' || it.groupId == 'com.okkero.skedule' || it.groupId == 'org.jetbrains.kotlin'  || it.groupId == 'org.jetbrains.kotlinx' }
+    }
+}

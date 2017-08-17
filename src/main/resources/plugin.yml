@@ -1,0 +1,5 @@
+name: SpringJdbcLib
+main: com.dumptruckman.springjdbc.SpringJdbcLib
+author: dumptruckman
+version: @plugin_version@
+load: STARTUP
