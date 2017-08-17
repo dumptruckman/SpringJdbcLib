@@ -96,10 +96,10 @@ if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
 
     def deployer = uploadArchives.repositories.mavenDeployer
     [installer, deployer]*.pom*.whenConfigured {pom ->
-        pom.dependencies.removeAll { it.groupId == 'org.bstats' || it.groupId == 'com.okkero.skedule' || it.groupId == 'org.jetbrains.kotlin'  || it.groupId == 'org.jetbrains.kotlinx' }
+        pom.dependencies.removeAll { it.groupId == 'org.bstats' || it.groupId == 'org.springframework' }
     }
 } else {
     [installer]*.pom*.whenConfigured {pom ->
-        pom.dependencies.removeAll { it.groupId == 'org.bstats' || it.groupId == 'com.okkero.skedule' || it.groupId == 'org.jetbrains.kotlin'  || it.groupId == 'org.jetbrains.kotlinx' }
+        pom.dependencies.removeAll { it.groupId == 'org.bstats' || it.groupId == 'org.springframework' }
     }
 }
