@@ -23,15 +23,37 @@
  */
 package com.dumptruckman.springjdbc;
 
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Connection information for a JDBC connection.
  */
-public class ConnectionInfo {
+public class ConnectionInfo implements ConfigurationSerializable {
 
     private final String dbType;
     private final String user;
     private final String pass;
     private final String url;
+
+    @Override
+    public Map<String, Object> serialize() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("type", dbType);
+        result.put("username", user);
+        result.put("password", pass);
+        result.put("url", url);
+        return result;
+    }
+
+    public static ConnectionInfo deserialize(Map<String, Object> serialized) {
+        return new ConnectionInfo(serialized.getOrDefault("type", "H2").toString(),
+                serialized.getOrDefault("username", "root").toString(),
+                serialized.getOrDefault("password", "").toString(),
+                serialized.getOrDefault("url", "jdbc:h2:file:h2.db").toString());
+    }
 
     /**
      * Creates a new ConnectionInfo object with the given properties.
