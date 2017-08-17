@@ -53,7 +53,12 @@ processResources {
     ]
 }
 
-jar.finalizedBy shadowJar
+task generateJavadoc(type: Javadoc) {
+    source = 'src/main/java'
+    classpath = files(project.sourceSets.main.compileClasspath)
+    options.links("https://docs.oracle.com/javase/8/docs/api/");
+    options.links("http://docs.spring.io/spring/docs/current/javadoc-api/");
+}
 
 shadowJar {
     baseName = project.name
@@ -63,10 +68,13 @@ shadowJar {
     relocate 'org.apache.commons', 'commons.springjdbclib'
 }
 
+jar.dependsOn generateJavadoc
+jar.finalizedBy shadowJar
+
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier 'sources'
     from sourceSets.main.allSource
-    from "${projectDir}/LICENSE.txt"
+    from "${projectDir}/LICENSE.md"
 }
 
 task javadocJar(type: Jar) {
