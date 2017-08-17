@@ -23,6 +23,13 @@
  */
 package com.dumptruckman.springjdbc;
 
+import org.bstats.Metrics;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class SpringJdbcLib extends JavaPlugin { }
+public class SpringJdbcLib extends JavaPlugin {
+
+    @Override
+    public void onEnable() {
+        new Metrics(this);
+    }
+}
